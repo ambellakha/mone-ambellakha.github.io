@@ -1,0 +1,1048 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>useEffect — Seven Traps | Training</title>
+        <script src="https://unpkg.com/@stackblitz/sdk@1/bundles/sdk.umd.js"></script>
+        <style>
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            :root {
+                --bg: #0b0f1a;
+                --surface: #111827;
+                --border: #1f2937;
+                --text: #e5e7eb;
+                --muted: #6b7280;
+                --accent: #6366f1;
+                --accent-hover: #4f46e5;
+                --green: #22c55e;
+                --yellow: #facc15;
+                --red: #f87171;
+                --tag-bg-easy: #052e16;
+                --tag-text-easy: #4ade80;
+                --tag-bg-mid: #422006;
+                --tag-text-mid: #fb923c;
+                --tag-bg-hard: #450a0a;
+                --tag-text-hard: #f87171;
+            }
+
+            body {
+                background: var(--bg);
+                color: var(--text);
+                font-family: "Georgia", serif;
+                min-height: 100vh;
+                padding: 48px 24px 80px;
+            }
+
+            .wrap {
+                max-width: 860px;
+                margin: 0 auto;
+            }
+
+            header {
+                margin-bottom: 52px;
+            }
+            .eyebrow {
+                font-family: monospace;
+                font-size: 11px;
+                letter-spacing: 3px;
+                text-transform: uppercase;
+                color: var(--muted);
+                margin-bottom: 10px;
+            }
+            h1 {
+                font-size: 32px;
+                font-weight: 400;
+                font-style: italic;
+                color: #f9fafb;
+                letter-spacing: -0.5px;
+                margin-bottom: 12px;
+            }
+            .subtitle {
+                color: var(--muted);
+                font-size: 15px;
+                line-height: 1.7;
+                max-width: 580px;
+            }
+            .subtitle code {
+                font-family: monospace;
+                background: #1f2937;
+                padding: 1px 6px;
+                border-radius: 3px;
+                color: #a5b4fc;
+                font-size: 13px;
+            }
+
+            .how-it-works {
+                background: #111827;
+                border: 1px solid var(--border);
+                border-left: 3px solid var(--accent);
+                border-radius: 8px;
+                padding: 16px 20px;
+                margin-bottom: 44px;
+                font-size: 13px;
+                color: #9ca3af;
+                line-height: 1.75;
+            }
+            .how-it-works strong {
+                color: #c7d2fe;
+            }
+
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+                gap: 16px;
+            }
+
+            .card {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                padding: 20px 22px;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                transition:
+                    border-color 0.15s,
+                    transform 0.1s;
+                cursor: default;
+            }
+            .card:hover {
+                border-color: #374151;
+                transform: translateY(-1px);
+            }
+
+            .card-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+            }
+            .card-num {
+                font-family: monospace;
+                font-size: 11px;
+                color: var(--muted);
+                letter-spacing: 1px;
+            }
+            .tag {
+                font-family: monospace;
+                font-size: 10px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                padding: 3px 10px;
+                border-radius: 20px;
+            }
+            .tag-easy {
+                background: var(--tag-bg-easy);
+                color: var(--tag-text-easy);
+            }
+            .tag-mid {
+                background: var(--tag-bg-mid);
+                color: var(--tag-text-mid);
+            }
+            .tag-hard {
+                background: var(--tag-bg-hard);
+                color: var(--tag-text-hard);
+            }
+
+            .card-title {
+                font-size: 16px;
+                font-weight: 500;
+                color: #f3f4f6;
+            }
+            .card-scenario {
+                font-size: 13px;
+                color: #9ca3af;
+                line-height: 1.65;
+            }
+            .card-trap {
+                font-size: 12px;
+                color: #7c3aed;
+                font-style: italic;
+                display: flex;
+                gap: 6px;
+                align-items: flex-start;
+            }
+
+            .launch-btn {
+                margin-top: 6px;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                background: var(--accent);
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 9px 18px;
+                font-family: monospace;
+                font-size: 12px;
+                letter-spacing: 0.5px;
+                cursor: pointer;
+                text-transform: uppercase;
+                transition: background 0.15s;
+                align-self: flex-start;
+            }
+            .launch-btn:hover {
+                background: var(--accent-hover);
+            }
+            .launch-btn:disabled {
+                background: #374151;
+                color: #6b7280;
+                cursor: default;
+            }
+            .launch-btn svg {
+                width: 13px;
+                height: 13px;
+                fill: currentColor;
+            }
+
+            .loading-text {
+                font-family: monospace;
+                font-size: 11px;
+                color: var(--muted);
+                margin-left: 4px;
+                display: none;
+            }
+            .loading .loading-text {
+                display: inline;
+            }
+            .loading .btn-label {
+                display: none;
+            }
+
+            footer {
+                margin-top: 60px;
+                text-align: center;
+                font-size: 12px;
+                color: #374151;
+                font-family: monospace;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <header>
+                <div class="eyebrow">React · useEffect · Team Training</div>
+                <h1>Seven Traps</h1>
+                <p class="subtitle">
+                    Seven exercises built from real-world anti-patterns. Each
+                    opens a full React project in <strong>StackBlitz</strong> —
+                    no install, no account. The buggy code is pre-loaded. Your
+                    job: find what's wrong and fix it. The
+                    <code>TRAINING.md</code> file in each project contains the
+                    scenario, the trap, and hints.
+                </p>
+            </header>
+
+            <div class="how-it-works">
+                <strong>How it works →</strong> Click "Open in StackBlitz" on
+                any exercise. A React playground opens in a new tab with the
+                broken component already loaded. Read
+                <strong>TRAINING.md</strong> first, then fix
+                <strong>src/Exercise.jsx</strong>. The preview updates live.
+                When the component renders without double-renders or console
+                warnings, you've got it.
+            </div>
+
+            <div class="grid" id="grid"></div>
+
+            <footer>
+                exercises grounded in react.dev official documentation
+            </footer>
+        </div>
+
+        <script src="https://unpkg.com/@stackblitz/sdk@1/bundles/sdk.umd.js"></script>
+
+        <script>
+            const exercises = [
+                {
+                    id: 1,
+                    title: "The Shopping Cart Total",
+                    difficulty: "Beginner",
+                    scenario:
+                        "A developer calculates order total and tax inside useEffect, storing both in state.",
+                    trap: "It feels natural to 'react' to items changing by computing totals in an effect.",
+                    trainingMd: `# Exercise 1 — The Shopping Cart Total
+
+## Difficulty: Beginner
+
+## Scenario
+You're reviewing a cart component for an e-commerce app.
+The developer calculates \`total\` and \`tax\` inside a \`useEffect\`,
+storing both as separate state variables.
+
+## Your Task
+Open \`src/Exercise.jsx\`. The component works, but it's wrong.
+
+**Question:** Why is using \`useEffect\` here a mistake?
+What symptoms would a user experience? Fix it.
+
+## Hints
+- Ask yourself: does this calculation touch anything outside React?
+- How many renders does the current code trigger for a single \`items\` change?
+- What does the user see between the first and second render?
+
+## The Rule
+> If a value is derivable from existing props or state, compute it during render.
+> No \`useEffect\`, no extra \`useState\`.
+`,
+                    code: `import React from 'react';
+
+const initialItems = [
+  { id: 1, name: 'Apple', price: 45, quantity: 2 },
+  { id: 2, name: 'Banana', price: 18, quantity: 1 },
+  { id: 3, name: 'Bread', price: 12, quantity: 3 },
+];
+
+export default function CartSummary() {
+  const [items, setItems] = React.useState(initialItems);
+  const [total, setTotal] = React.useState(0);
+  const [tax, setTax] = React.useState(0);
+
+  // 🪤 TRAP: Is useEffect the right tool here?
+  React.useEffect(() => {
+    const subtotal = items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+    setTotal(subtotal);
+    setTax(subtotal * 0.08);
+  }, [items]);
+
+  function removeItem(id) {
+    setItems(prev => prev.filter(i => i.id !== id));
+  }
+
+  return (
+    <div style={{ fontFamily: 'monospace', padding: 24, maxWidth: 420 }}>
+      <h2>Cart</h2>
+      {items.map(item => (
+        <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', margin: '8px 0' }}>
+          <span>{item.name} × {item.quantity}</span>
+          <span>
+            \${(item.price * item.quantity).toFixed(2)}
+            <button onClick={() => removeItem(item.id)} style={{ marginLeft: 8 }}>✕</button>
+          </span>
+        </div>
+      ))}
+      <hr style={{ margin: '16px 0' }} />
+      <div>Subtotal: <strong>\${total.toFixed(2)}</strong></div>
+      <div>Tax (8%): <strong>\${tax.toFixed(2)}</strong></div>
+      <div style={{ marginTop: 8, fontSize: 18 }}>
+        Total: <strong>\${(total + tax).toFixed(2)}</strong>
+      </div>
+    </div>
+  );
+}
+`,
+                },
+                {
+                    id: 2,
+                    title: "The Search Filter",
+                    difficulty: "Beginner",
+                    scenario:
+                        "A product list filters results inside useEffect whenever the search query or product list changes.",
+                    trap: "Developers from Angular/Vue learned to 'watch' values with lifecycle hooks and apply the same pattern in React.",
+                    trainingMd: `# Exercise 2 — The Search Filter
+
+## Difficulty: Beginner
+
+## Scenario
+A product search page filters a list of items based on a text input.
+The developer stores the filtered list in state and updates it via \`useEffect\`.
+
+## Your Task
+Open \`src/Exercise.jsx\`. The component has a subtle performance bug.
+
+**Question:** What extra work is React doing on every keystroke?
+What does the user see between renders? Fix it.
+
+## Hints
+- Open the browser console. Add a \`console.log('rendered')\` at the top of the component.
+  Count how many times it logs per keystroke.
+- What would happen if you just derived \`filtered\` directly from \`products\` and \`query\`?
+- Is \`filtered\` state, or is it a calculation?
+
+## The Rule
+> Filtering, sorting, and transforming existing data is a calculation —
+> not a side effect. Do it during render.
+`,
+                    code: `import React from 'react';
+
+const PRODUCTS = [
+  { id: 1, name: 'Apple' },
+  { id: 2, name: 'Banana' },
+  { id: 3, name: 'Cup' },
+  { id: 4, name: 'Box' },
+  { id: 5, name: 'Rug' },
+  { id: 6, name: 'Pencil' },
+  { id: 7, name: 'Bottle' },
+  { id: 8, name: 'Bread' },
+];
+
+export default function ProductSearch() {
+  const [query, setQuery] = React.useState('');
+  const [filtered, setFiltered] = React.useState(PRODUCTS);
+
+  // 🪤 TRAP: Is this the right approach?
+  React.useEffect(() => {
+    setFiltered(
+      PRODUCTS.filter(p =>
+        p.name.toLowerCase().includes(query.toLowerCase())
+      )
+    );
+  }, [query]);
+
+  return (
+    <div style={{ fontFamily: 'monospace', padding: 24, maxWidth: 340 }}>
+      <h2>Products</h2>
+      <input
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        placeholder="Search..."
+        style={{ width: '100%', padding: '8px', marginBottom: 16, fontSize: 14 }}
+      />
+      {filtered.length === 0 && <p>No results.</p>}
+      <ul style={{ listStyle: 'none', padding: 0 }}>
+        {filtered.map(p => (
+          <li key={p.id} style={{ padding: '6px 0', borderBottom: '1px solid #eee' }}>
+            {p.name}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+`,
+                },
+                {
+                    id: 3,
+                    title: "The Form Submission",
+                    difficulty: "Beginner",
+                    scenario:
+                        "A login form sets a `submitted` boolean flag on submit, then watches it with useEffect to call the API.",
+                    trap: "The developer wanted to separate concerns — form logic from API logic — and thought useEffect was the clean way to handle side effects.",
+                    trainingMd: `# Exercise 3 — The Form Submission
+
+## Difficulty: Beginner
+
+## Scenario
+A login form uses a \`submitted\` boolean as an intermediary: when the user
+submits, \`setSubmitted(true)\` is called. A \`useEffect\` watches \`submitted\`
+and fires the API call.
+
+## Your Task
+Open \`src/Exercise.jsx\`. Find all the bugs — there are at least three.
+
+**Question:** What's fundamentally wrong with this pattern?
+What could go wrong in production?
+
+## Hints
+- What happens if \`submitted\` is already \`true\` and the component re-renders?
+- What values does the effect use that aren't in its dependency array?
+- When is the right time to call \`loginUser\`?
+- Does this logic "happen because the component is on screen", or
+  "because the user did something"?
+
+## The Rule
+> Logic caused by a user action belongs in the event handler — not in an effect.
+> Effects are for synchronizing with external systems, not reacting to user events.
+`,
+                    code: `import React from 'react';
+
+// Simulated API
+function loginUser({ email, password }) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (email === 'test@test.com' && password === '1234') {
+        resolve({ token: 'abc123' });
+      } else {
+        reject(new Error('Invalid credentials'));
+      }
+    }, 800);
+  });
+}
+
+export default function LoginForm() {
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [submitted, setSubmitted] = React.useState(false);
+  const [error, setError] = React.useState(null);
+  const [success, setSuccess] = React.useState(false);
+
+  // 🪤 TRAP: Why is this an anti-pattern?
+  React.useEffect(() => {
+    if (submitted) {
+      loginUser({ email, password })
+        .then(() => setSuccess(true))
+        .catch(err => setError(err.message));
+    }
+  }, [submitted]); // ← notice what's missing from deps
+
+  return (
+    <div style={{ fontFamily: 'monospace', padding: 24, maxWidth: 320 }}>
+      <h2>Login</h2>
+      {success && <p style={{ color: 'green' }}>✓ Logged in!</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      <div style={{ marginBottom: 12 }}>
+        <label>Email<br />
+          <input value={email} onChange={e => setEmail(e.target.value)}
+            style={{ width: '100%', padding: 6, marginTop: 4 }}
+            placeholder="test@test.com" />
+        </label>
+      </div>
+      <div style={{ marginBottom: 12 }}>
+        <label>Password<br />
+          <input type="password" value={password}
+            onChange={e => setPassword(e.target.value)}
+            style={{ width: '100%', padding: 6, marginTop: 4 }}
+            placeholder="1234" />
+        </label>
+      </div>
+      <button onClick={() => setSubmitted(true)}
+        style={{ padding: '8px 20px', cursor: 'pointer' }}>
+        Log in
+      </button>
+      <p style={{ fontSize: 11, color: '#999', marginTop: 12 }}>
+        Hint: try submitting twice without reloading the page.
+      </p>
+    </div>
+  );
+}
+`,
+                },
+                {
+                    id: 4,
+                    title: "The User Profile Reset",
+                    difficulty: "Intermediate",
+                    scenario:
+                        "A profile editor resets the active tab to 'overview' via useEffect whenever the userId prop changes.",
+                    trap: "Developers learn that useEffect responds to prop changes. This feels correct: 'when userId changes, reset the tab'.",
+                    trainingMd: `# Exercise 4 — The User Profile Reset
+
+## Difficulty: Intermediate
+
+## Scenario
+A user profile component has a tab bar. When navigating to a different user,
+the developer wants the tab to reset to 'overview'. They do this with a
+\`useEffect\` that watches \`userId\`.
+
+## Your Task
+Open \`src/Exercise.jsx\`. The logic is correct but the implementation is inefficient.
+
+**Question:** How many renders happen when \`userId\` changes?
+What does the user see between renders? Provide two alternative fixes.
+
+## Hints
+- Add a \`console.log('rendered', activeTab)\` at the top and click "Next user".
+  Count the renders.
+- What React feature is designed exactly for "reset all state when identity changes"?
+- What if you set state during render instead of in an effect?
+
+## The Rule
+> Use the \`key\` prop to reset a component's state when its identity changes.
+> Or set state during render. Don't use \`useEffect\` for state resets.
+`,
+                    code: `import React from 'react';
+
+const USERS = [
+  { id: 1, name: 'Ahmed', role: 'Engineer' },
+  { id: 2, name: 'Oussama', role: 'Designer' },
+  { id: 3, name: 'Sara', role: 'Product Manager' },
+];
+
+const TABS = ['overview', 'activity', 'settings'];
+
+// 🪤 TRAP: Is this the right way to reset the tab?
+function UserProfile({ userId }) {
+  const user = USERS.find(u => u.id === userId);
+  const [activeTab, setActiveTab] = React.useState('overview');
+
+  React.useEffect(() => {
+    setActiveTab('overview');
+  }, [userId]);
+
+  return (
+    <div style={{ fontFamily: 'monospace', padding: '16px 0' }}>
+      <h3>{user.name} — {user.role}</h3>
+      <div style={{ display: 'flex', gap: 8, margin: '12px 0' }}>
+        {TABS.map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              padding: '6px 14px',
+              background: activeTab === tab ? '#6366f1' : '#f3f4f6',
+              color: activeTab === tab ? 'white' : '#111',
+              border: 'none',
+              borderRadius: 4,
+              cursor: 'pointer',
+              fontFamily: 'monospace',
+            }}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+      <div style={{ padding: 12, background: '#f9fafb', borderRadius: 6, fontSize: 13 }}>
+        Showing: <strong>{activeTab}</strong> for user #{userId}
+      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  const [currentUser, setCurrentUser] = useState(1);
+
+  return (
+    <div style={{ fontFamily: 'monospace', padding: 24, maxWidth: 420 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {USERS.map(u => (
+          <button key={u.id} onClick={() => setCurrentUser(u.id)}
+            style={{
+              padding: '6px 12px',
+              background: currentUser === u.id ? '#111' : '#e5e7eb',
+              color: currentUser === u.id ? 'white' : '#111',
+              border: 'none', borderRadius: 4, cursor: 'pointer', fontFamily: 'monospace',
+            }}>
+            {u.name.split(' ')[0]}
+          </button>
+        ))}
+      </div>
+      {/* FIX OPTION A: add key={currentUser} to UserProfile */}
+      <UserProfile userId={currentUser} />
+    </div>
+  );
+}
+`,
+                },
+                {
+                    id: 5,
+                    title: "The Notification Sync",
+                    difficulty: "Intermediate",
+                    scenario:
+                        "A notification center chains effects: one to fetch, one to watch for all-read and call the server.",
+                    trap: "The developer thought 'when notifications change, sync to server' sounds like a legitimate synchronization task.",
+                    trainingMd: `# Exercise 5 — The Notification Sync
+
+## Difficulty: Intermediate
+
+## Scenario
+A notification panel fetches notifications on mount, then uses a second
+\`useEffect\` to watch the array and call \`markAllReadOnServer()\` whenever
+all notifications are marked read.
+
+## Your Task
+Open \`src/Exercise.jsx\`. There are multiple problems.
+
+**Question:** List every issue. Then rewrite the component correctly.
+
+## Hints
+- When does the second effect fire? Does it fire on initial load?
+- Is \`allRead\` state, or is it derivable from \`notifications\`?
+- What triggers \`markAllReadOnServer\`? A user action, or the component being displayed?
+- What happens if \`fetchNotifications()\` returns already-read notifications?
+
+## The Rule
+> Don't chain effects. User-triggered server calls belong in event handlers.
+> Derived booleans don't need state or effects — compute during render.
+`,
+                    code: `import React from 'react';
+
+// Simulated API
+function fetchNotifications() {
+  return Promise.resolve([
+    { id: 1, text: 'New comment on your post', read: false },
+    { id: 2, text: 'Someone mentioned you', read: false },
+    { id: 3, text: 'Your export is ready', read: false },
+  ]);
+}
+function markAllReadOnServer() {
+  console.log('📡 markAllReadOnServer() called');
+  return Promise.resolve();
+}
+
+export default function NotificationCenter() {
+  const [notifications, setNotifications] = React.useState([]);
+  const [allRead, setAllRead] = React.useState(false);
+
+  // Effect 1: fetch on mount ← is this one ok?
+  React.useEffect(() => {
+    fetchNotifications().then(setNotifications);
+  }, []);
+
+  // 🪤 TRAP: Effect 2 — chained effect
+  React.useEffect(() => {
+    if (notifications.length > 0 && notifications.every(n => n.read)) {
+      setAllRead(true);
+      markAllReadOnServer();
+    }
+  }, [notifications]);
+
+  function handleMarkAllRead() {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  }
+
+  return (
+    <div style={{ fontFamily: 'monospace', padding: 24, maxWidth: 360 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <h2>Notifications</h2>
+        <button onClick={handleMarkAllRead}
+          style={{ fontSize: 12, padding: '4px 10px', cursor: 'pointer' }}>
+          Mark all read
+        </button>
+      </div>
+      {allRead && <p style={{ color: 'green', fontSize: 13 }}>✓ All caught up</p>}
+      {notifications.map(n => (
+        <div key={n.id} style={{
+          display: 'flex', gap: 10, padding: '8px 0',
+          borderBottom: '1px solid #eee', opacity: n.read ? 0.4 : 1
+        }}>
+          <span>{n.read ? '○' : '●'}</span>
+          <span style={{ fontSize: 13 }}>{n.text}</span>
+        </div>
+      ))}
+      <p style={{ fontSize: 11, color: '#999', marginTop: 12 }}>
+        Open the console and watch when markAllReadOnServer fires.
+      </p>
+    </div>
+  );
+}
+`,
+                },
+                {
+                    id: 6,
+                    title: "The Analytics Logger",
+                    difficulty: "Intermediate",
+                    scenario:
+                        "A page logs a 'page_view' on mount and logs 'tab_change' events via useEffect watching the active tab.",
+                    trap: "useEffect with [] 'runs on mount' — devs extend this to watch state for logging, not realising effects fire on mount too.",
+                    trainingMd: `# Exercise 6 — The Analytics Logger
+
+## Difficulty: Intermediate
+
+## Scenario
+A product page logs two analytics events: a \`page_view\` when the component
+mounts, and a \`tab_change\` whenever the active tab changes.
+Both are implemented as \`useEffect\` hooks.
+
+## Your Task
+Open \`src/Exercise.jsx\`. Open the browser console.
+Load the page. Notice what gets logged.
+Then click a tab. Notice what gets logged.
+
+**Question:** What events fire that shouldn't? Why? Fix the tab_change logger.
+
+## Hints
+- Effects always run after the first render. What is \`activeTab\` on the first render?
+- Does a "tab change" happen when the component mounts?
+- Who triggers a tab change — the component appearing, or the user clicking?
+- In Strict Mode, effects run twice in development. How would that affect logging?
+
+## The Rule
+> Effects fire on mount — so they log initial state as "changes".
+> Events triggered by user actions belong in event handlers, not effects.
+`,
+                    code: `import React from 'react';
+
+const analytics = {
+  log: (event, data) => {
+    console.log(\`[analytics] \${event}\`, data);
+  }
+};
+
+const TABS = ['details', 'reviews', 'shipping'];
+const PRODUCT_ID = 'tagine-001';
+
+export default function ProductPage() {
+  const [activeTab, setActiveTab] = React.useState('details');
+
+  // page_view on mount — is this ok?
+  React.useEffect(() => {
+    analytics.log('page_view', { productId: PRODUCT_ID });
+  }, []);
+
+  // 🪤 TRAP: tab_change logger
+  React.useEffect(() => {
+    analytics.log('tab_change', { productId: PRODUCT_ID, tab: activeTab });
+  }, [activeTab]);
+
+  return (
+    <div style={{ fontFamily: 'monospace', padding: 24, maxWidth: 420 }}>
+      <h2>Tamegroute Tagine</h2>
+      <p style={{ color: '#666', fontSize: 13, marginBottom: 16 }}>
+        Traditional Draa Valley black ceramic, wood-fired.
+      </p>
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        {TABS.map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              padding: '6px 14px',
+              background: activeTab === tab ? '#111' : '#f3f4f6',
+              color: activeTab === tab ? 'white' : '#111',
+              border: 'none', borderRadius: 4, cursor: 'pointer',
+              fontFamily: 'monospace', fontSize: 13,
+            }}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ padding: 16, background: '#f9fafb', borderRadius: 6, fontSize: 13 }}>
+        <strong>{activeTab}</strong> content goes here.
+      </div>
+
+      <p style={{ fontSize: 11, color: '#999', marginTop: 16 }}>
+        → Open the console and reload. How many events fire before you click anything?
+      </p>
+    </div>
+  );
+}
+`,
+                },
+                {
+                    id: 7,
+                    title: "The Grand Slam: Dashboard Widget",
+                    difficulty: "Advanced",
+                    scenario:
+                        "A dashboard widget with 4 useEffect calls: data fetch, badge color derivation, analytics impression, and keyboard shortcut.",
+                    trap: "Multiple legitimate-looking tasks packed together, making it hard to see which are real effects and which aren't.",
+                    trainingMd: `# Exercise 7 — The Grand Slam: Dashboard Widget
+
+## Difficulty: Advanced
+
+## Scenario
+A dashboard widget has 4 \`useEffect\` calls:
+1. Fetch metric data
+2. Derive a badge color from the status
+3. Log an analytics impression
+4. Listen for the Escape key to close the widget
+
+## Your Task
+Open \`src/Exercise.jsx\`. Audit every single effect.
+
+**For each one, answer:**
+- Is there an external system involved?
+- Is there a cleanup function? Does it need one?
+- Is this logic derivable during render instead?
+- Could a bug silently exist here?
+
+Then fix all issues.
+
+## Hints
+- Press Escape. Then unmount the widget and press Escape again.
+  What happens? Open the console.
+- Change the metric threshold and watch how many renders happen.
+- Which effects are touching external systems? Which are just computing values?
+- What's the correct way to handle async fetch with cleanup?
+
+## The Rule
+> Every setup needs a mirrored cleanup: connect→disconnect, subscribe→unsubscribe, fetch→abort.
+> Derived values (like badge color) never need effects.
+> Missing \`removeEventListener\` is a memory leak that survives unmount.
+`,
+                    code: `import React from 'react';
+
+// Simulated API
+function fetchMetric(id, { signal } = {}) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => {
+      resolve({ id, value: 73, threshold: 80, unit: '%', label: 'Uptime' });
+    }, 600);
+    if (signal) signal.addEventListener('abort', () => {
+      clearTimeout(t);
+      reject(new DOMException('Aborted', 'AbortError'));
+    });
+  });
+}
+
+export default function App() {
+  const [visible, setVisible] = React.useState(true);
+  return (
+    <div style={{ fontFamily: 'monospace', padding: 24 }}>
+      <button onClick={() => setVisible(v => !v)} style={{ marginBottom: 16, padding: '6px 14px', cursor: 'pointer' }}>
+        {visible ? 'Unmount widget' : 'Mount widget'}
+      </button>
+      <p style={{ fontSize: 11, color: '#999', marginBottom: 16 }}>
+        After unmounting: press Escape and check the console.
+      </p>
+      {visible && <DashboardWidget metricId="uptime-01" onClose={() => setVisible(false)} />}
+    </div>
+  );
+}
+
+function DashboardWidget({ metricId, onClose }) {
+  const [data, setData] = useState(null);
+  const [status, setStatus] = useState('loading');
+  const [badgeColor, setBadgeColor] = useState('gray');
+
+  // Effect 1: fetch
+  useEffect(() => {
+    fetchMetric(metricId).then(result => {
+      setData(result);
+      setStatus(result.value >= result.threshold ? 'ok' : 'alert');
+    });
+    // 🪤 No cleanup — is that ok for a fetch?
+  }, [metricId]);
+
+  // Effect 2: derive badge color
+  // 🪤 TRAP: is this the right place for this?
+  useEffect(() => {
+    const colors = { loading: 'gray', alert: '#ef4444', ok: '#22c55e' };
+    setBadgeColor(colors[status] ?? 'gray');
+  }, [status]);
+
+  // Effect 3: analytics impression
+  useEffect(() => {
+    console.log('[analytics] widget_impression', { metricId });
+  }, [metricId]);
+
+  // Effect 4: keyboard shortcut
+  // 🪤 TRAP: something critical is missing
+  useEffect(() => {
+    function handleKey(e) {
+      if (e.key === 'Escape') {
+        console.log('[keydown] Escape — closing widget');
+        onClose();
+      }
+    }
+    window.addEventListener('keydown', handleKey);
+    // ← what belongs here?
+  }, [onClose]);
+
+  return (
+    <div style={{
+      border: '1px solid #e5e7eb', borderRadius: 10, padding: 20,
+      maxWidth: 300, background: '#fafafa'
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+        <strong>Widget: {metricId}</strong>
+        <span style={{
+          background: badgeColor, color: 'white', borderRadius: 12,
+          padding: '2px 10px', fontSize: 11, fontWeight: 700,
+        }}>
+          {status}
+        </span>
+      </div>
+      {data ? (
+        <div style={{ fontSize: 14 }}>
+          <div style={{ fontSize: 32, fontWeight: 700 }}>{data.value}{data.unit}</div>
+          <div style={{ color: '#6b7280' }}>{data.label} · threshold {data.threshold}{data.unit}</div>
+        </div>
+      ) : (
+        <div style={{ color: '#9ca3af' }}>Loading…</div>
+      )}
+      <div style={{ fontSize: 11, color: '#d1d5db', marginTop: 12 }}>Press Esc to close</div>
+    </div>
+  );
+}
+`,
+                },
+            ];
+
+            function tagClass(difficulty) {
+                if (difficulty === "Beginner") return "tag-easy";
+                if (difficulty === "Advanced") return "tag-hard";
+                return "tag-mid";
+            }
+
+            function buildProject(ex) {
+                return {
+                    title: `#${ex.id} — ${ex.title}`,
+                    description: ex.scenario,
+                    template: "create-react-app",
+                    dependencies: {
+                        react: "^18.0.0",
+                        "react-dom": "^18.0.0",
+                    },
+                    files: {
+                        "public/index.html": `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>#${ex.id} — ${ex.title}</title>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>`,
+                        "src/index.js": `import React, { Profiler } from 'react';
+import ReactDOM from 'react-dom/client';
+import Exercise from './Exercise';
+
+const handleRender = (data) => {
+  console.log(data);
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <Profiler id="Excercice" onRender={handleRender}>
+      <Exercise />
+    </Profiler>
+  </React.StrictMode>
+);`,
+                        "src/Exercise.jsx": ex.code,
+                        "TRAINING.md": ex.trainingMd,
+                    },
+                };
+            }
+
+            const grid = document.getElementById("grid");
+
+            exercises.forEach((ex) => {
+                const card = document.createElement("div");
+                card.className = "card";
+                card.innerHTML = `
+    <div class="card-header">
+      <span class="card-num">exercise ${String(ex.id).padStart(2, "0")}</span>
+      <span class="tag ${tagClass(ex.difficulty)}">${ex.difficulty}</span>
+    </div>
+    <div class="card-title">${ex.title}</div>
+    <div class="card-scenario">${ex.scenario}</div>
+    <div class="card-trap">🪤 <span>${ex.trap}</span></div>
+    <button class="launch-btn" id="btn-${ex.id}">
+      <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 1v14l11-7L3 1z"/>
+      </svg>
+      <span class="btn-label">Open in StackBlitz</span>
+      <span class="loading-text">Opening…</span>
+    </button>
+  `;
+                grid.appendChild(card);
+
+                const btn = card.querySelector(`#btn-${ex.id}`);
+                btn.addEventListener("click", () => {
+                    btn.disabled = true;
+                    btn.classList.add("loading");
+                    try {
+                        StackBlitzSDK.openProject(buildProject(ex), {
+                            newWindow: true,
+                            openFile: ["TRAINING.md", "src/Exercise.jsx"],
+                        });
+                    } catch (e) {
+                        btn.disabled = false;
+                        btn.classList.remove("loading");
+                    } finally {
+                        setTimeout(() => {
+                            btn.disabled = false;
+                            btn.classList.remove("loading");
+                        }, 3000);
+                    }
+                });
+            });
+        </script>
+    </body>
+</html>
