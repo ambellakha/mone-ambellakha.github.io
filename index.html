@@ -600,7 +600,7 @@ function UserProfile({ userId }) {
 }
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(1);
+  const [currentUser, setCurrentUser] = React.useState(1);
 
   return (
     <div style={{ fontFamily: 'monospace', padding: 24, maxWidth: 420 }}>
@@ -884,12 +884,12 @@ export default function App() {
 }
 
 function DashboardWidget({ metricId, onClose }) {
-  const [data, setData] = useState(null);
-  const [status, setStatus] = useState('loading');
-  const [badgeColor, setBadgeColor] = useState('gray');
+  const [data, setData] = React.useState(null);
+  const [status, setStatus] = React.useState('loading');
+  const [badgeColor, setBadgeColor] = React.useState('gray');
 
   // Effect 1: fetch
-  useEffect(() => {
+  React.useEffect(() => {
     fetchMetric(metricId).then(result => {
       setData(result);
       setStatus(result.value >= result.threshold ? 'ok' : 'alert');
@@ -899,19 +899,19 @@ function DashboardWidget({ metricId, onClose }) {
 
   // Effect 2: derive badge color
   // 🪤 TRAP: is this the right place for this?
-  useEffect(() => {
+  React.useEffect(() => {
     const colors = { loading: 'gray', alert: '#ef4444', ok: '#22c55e' };
     setBadgeColor(colors[status] ?? 'gray');
   }, [status]);
 
   // Effect 3: analytics impression
-  useEffect(() => {
+  React.useEffect(() => {
     console.log('[analytics] widget_impression', { metricId });
   }, [metricId]);
 
   // Effect 4: keyboard shortcut
   // 🪤 TRAP: something critical is missing
-  useEffect(() => {
+  React.useEffect(() => {
     function handleKey(e) {
       if (e.key === 'Escape') {
         console.log('[keydown] Escape — closing widget');
